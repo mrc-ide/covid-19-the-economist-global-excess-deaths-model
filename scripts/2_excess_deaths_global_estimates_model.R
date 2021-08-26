@@ -525,26 +525,35 @@ X <- X %>%
   select(!all_of(dv))
 
 #remove uneeded data etc
-remove(missingCounts, XNA, countries_to_remove, i, noMissingDesign, remainingVars,
+remove(missingCounts, countries_to_remove, i, noMissingDesign, remainingVars,
        timeInvariant, timeInvariant_missing, timeVariant, timeVariant_missing,
-       better_approx, impute_missing_mean, impute_missing_mean_timeVariant,
-       pca, cols)
+       better_approx, impute_missing_mean, impute_missing_mean_timeVariant)
 
-# Save covariates:
-export <- pred_frame %>%
-  filter(date %in% X$date) %>%
-  select(
-    any_of(
-      c("iso3c", "country", "date", "region", "subregion", "population", "median_age", "aged_65_older", "life_expectancy", "daily_covid_deaths_per_100k", "daily_covid_cases_per_100k", "daily_tests_per_100k", "cumulative_daily_covid_cases_per_100k", 
-        "cumulative_daily_covid_deaths_per_100k",
-        "cumulative_daily_tests_per_100k", "demography_adjusted_ifr",
-        "daily_covid_cases",
-        "daily_tests",
-        "daily_covid_deaths",
-        "daily_excess_deaths",
-        dv)
-    )
-  )#these aren't even the real covariates?? We'll keep this as it is for now
+# Save covariates (We won't actually use the covariates other than regions etc, so we'll attach Y and calculate the weekly average for reported covid deaths):
+export <- cbind(X %>% select(iso3c, date), Y) %>%
+  rename(!! dv := Y) %>% #attach the time invariant region data
+  left_join(
+    pred_frame %>% 
+      select(
+        c(iso3c, country, region, subregion, population)
+      ) %>%
+      unique()
+  ) %>% #attach the weekly mean for the number of reported covid deaths
+  left_join(
+    pred_frame %>% 
+      mutate(
+        week = round(as.numeric(date)/7, 0)
+      ) %>%
+      group_by(iso3c, week) %>%
+      summarise(
+        daily_covid_deaths_per_100k = mean(daily_covid_deaths_per_100k, na.rm = T),
+        daily_covid_deaths = mean(daily_covid_deaths, na.rm = T),
+        daily_excess_deaths = mean(daily_excess_deaths, na.rm = T),
+        date = mean(as.numeric(date))
+      ) %>%
+      ungroup() %>%
+      select(!week)
+  )
 saveRDS(export, "output-data/export_covariates.RDS")
 
 # Step 6: construct calibration plot ---------------------------------------
@@ -613,10 +622,6 @@ for(i in 1:length(folds)){
 # Weighted mean-squared error:
 mean((abs(results$target - results$preds)^2)*results$weights/mean(results$weights))
 
-# Save fold results (so we can compare with other folds)
-write_csv(results, "output-data/results_gradient_booster.csv")
-
-
 # Step 7: inspect predictions ---------------------------------------
 
 # This creates a plotting data frame:
@@ -626,6 +631,7 @@ pdat <- cbind.data.frame(pred = results$preds,
                          region = X_cv$region,
                          w = results$weights)
 
+#save so we can regenerate this plot else where
 write_csv(pdat, "output-data/calibration_plot_gradient_booster.csv")
 
 
@@ -701,11 +707,19 @@ for(i in 1:(B+1)){
                          weights = temp_weights)
   
   # Save model objects
-  gbt.save(gbt_model, paste0("output-data/gbt_model_B_", i, ".agtb"))
+  gbt.save(gbt_model, paste0("output-data/models/gbt_model_B_", i, ".agtb"))
   
   #print feature importance
   if(i == 1){
-    gbt.importance(feature_names=colnames(X_full), object=gbt_model)
+    importance <- gbt.importance(feature_names=predictors, object=gbt_model) %>%
+      as.data.frame() %>%
+      arrange(.)
+    importance$names <- row.names(importance) 
+    print(
+      ggplot(importance[1:10,], aes(x = fct_reorder(names, .), y = .)) + geom_col() + 
+        coord_flip() + 
+        labs(x = "10 most importance features")
+    )
   }
   
   cat(paste("\nCompleted B:", counter, "at : ", Sys.time(), "\n\n"))
@@ -713,23 +727,17 @@ for(i in 1:(B+1)){
   # Save model predictions
   preds <- predict(gbt_model, as.matrix(X[, predictors]))
   pred_matrix <- rbind(pred_matrix, preds)
-  saveRDS(pred_matrix, "temp.RDS")
 }
 
 # Clean up bootstrap prediction matrix:
 pred_matrix <- t(pred_matrix)
-colnames(pred_matrix) <- c("estimate", paste0("B", 1:B))
+if(B == 0){
+  colnames(pred_matrix) <- c("estimate")
+} else{
+  colnames(pred_matrix) <- c("estimate", paste0("B", 1:B)) 
+}
 rownames(pred_matrix) <- 1:nrow(pred_matrix)
 
-estimate <- pred_matrix[, 1]
-
-# Sort in case one wants to quickly extract bootstrap CI:
-pred_matrix_sorted <- pred_matrix
-for(i in 1:nrow(pred_matrix)){
-  pred_matrix_sorted[i, ] <- sort(pred_matrix[i, ])
-}
-
 saveRDS(pred_matrix, "output-data/pred_matrix.RDS")
-saveRDS(pred_matrix_sorted, "pred_matrix_sorted.RDS")
 
 # See next script for continuation (including extracting daily and cumulative data with confidence intervals)
