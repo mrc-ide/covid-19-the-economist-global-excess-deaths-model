@@ -424,6 +424,18 @@ X <- X %>%
   )
   )
 
+#add indicators for missing data
+X <- X %>%
+  left_join(
+    df %>%
+      select(iso3c, date, where(~any(is.na(.x)))) %>%
+      transmute(across(
+        !any_of(c(exclude, dv, "date", "iso3c")),
+        list(is_na = ~if_else(is.na(.x), 1, 0))
+      ),
+      iso3c = iso3c, date = date)
+  )
+
 predictors <- setdiff(names(X), c(exclude,dv))
 
 #add regions back in (we use this for plotting later) and remove uneeded variables
