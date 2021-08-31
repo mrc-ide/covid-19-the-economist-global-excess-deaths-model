@@ -291,7 +291,8 @@ country_export <- confidence_intervals(new_col_names = "estimated_daily_excess_d
                                        bootstrap_predictions = pred_matrix,
                                        known_data_column = "daily_excess_deaths",
                                        model_prediction = estimate,
-                                       include_model_prediction_in_ci = T)
+                                       include_model_prediction_in_ci = T,
+                                       include_final_prediction_in_ci = F)
 
 # Inspect:
 ggplot(country_export[country_export$iso3c %in% c("IND", "ZAF", "USA", "CHN", 
