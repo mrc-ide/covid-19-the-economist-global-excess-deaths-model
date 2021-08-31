@@ -169,6 +169,7 @@ cal_plot_7 <- ggplot(results %>% filter(region == "North America")) +
   facet_wrap(facets = vars(iso3c), scales = "free_y")
 
 #save to pdf
+dir.create("output-data/calibration", showWarnings = FALSE)
 pdf("output-data/calibration/plots.pdf")
 cal_plot
 cal_plot_1
