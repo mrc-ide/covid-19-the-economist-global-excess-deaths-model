@@ -105,94 +105,21 @@ df <- mutate(df,
 #should have no missing data
 noMissingDesign <- c("iso3c", "date", "weekday",  "country", "is_subregion")
 
-timeInvariant <- c(
-  "population",
-  "median_age_region_average",
-  "median_age_sub_region_average", "median_age_econ_region_average",
-  "wdi_life_expectancy_at_birth_region_average", "wdi_life_expectancy_at_birth_sub_region_average",
-  "wdi_life_expectancy_at_birth_econ_region_average",
-  "median_age_dist_average", "median_age_contiguous_country_average",
-  "wdi_life_expectancy_at_birth_dist_average", "wdi_life_expectancy_at_birth_contiguous_country_average",
-  "demography_adjusted_ifr_dist_average", "demography_adjusted_ifr_contiguous_country_average",
-  "regionLatin America & Caribbean", "regionSouth Asia",
-  "regionSub-Saharan Africa", "regionEurope & Central Asia",
-  "regionMiddle East & North Africa", "regionEast Asia & Pacific",
-  "regionNorth America", "subregionLatin America and the Caribbean",
-  "subregionSouthern Asia", "subregionSub-Saharan Africa",
-  "subregionSouthern Europe", "subregionWestern Asia",
-  "subregionAustralia and New Zealand", "subregionWestern Europe",
-  "subregionEastern Europe", "subregionNorthern America",
-  "subregionSouth-eastern Asia", "subregionEastern Asia",
-  "subregionPolynesia", "subregionNorthern Europe",
-  "subregionNorthern Africa", "subregionMelanesia",
-  "subregionMicronesia", "subregionCentral Asia", 
-  "wb_income_groupHigh income",
-  "wb_income_groupLow income", "wb_income_groupLower middle income",
-  "wb_income_groupUpper middle income",
-  "imf_economyUnknown", "imf_economyEmerging",
-  "imf_economyAdvanced", "continentAmericas",
-  "continentAsia", "continentAfrica",
-  "continentEurope", "continentOceania",
-  "island", "lat_largest_city", "lng_largest_city", "lat_capital", 
-  "lng_capital", "largest_city_pop_pct",
-  "vdem_freedom_of_expression_score", "vdem_liberal_democracy_score",
-  "boix_democracy_yes_no", "boix_democracy_duration_years", 
-  "freedom_house_civil_liberties", "freedom_house_political_rights",
-  "freedom_house_freedom_score", "polity_democracy_score",
-  "wdi_prop_less_2_usd_day", "wdi_gdppc_nominal", "wdi_gdppc_ppp",
-  "wdi_urban_population_pct", "wdi_urban_pop_1m_cities_pct", "wdi_gini_index",
-  "wdi_life_expectancy_at_birth", "wdi_pop_over_65", "wdi_pop_under_15",
-  "demography_adjusted_ifr", "tourist_arrivals_in_thousands_2019","population_density", "median_age",
-  "aged_65_older", "aged_70_older", "life_expectancy", "hospital_beds_per_thousand",
-  "demography_adjusted_ifr_region_average",
-  "demography_adjusted_ifr_sub_region_average", "demography_adjusted_ifr_econ_region_average"
-)
-
-timeVariant <- c(
-  "sero_nat_or_reg_delta_region_average", "sero_nat_or_reg_delta_sub_region_average", 
-  "sero_nat_or_reg_delta_econ_region_average", "sero_nat_delta_region_average",
-  "sero_nat_delta_sub_region_average", "sero_nat_delta_econ_region_average",
-  "daily_excess_deaths_per_100k_region_average", 
-  "daily_excess_deaths_per_100k_sub_region_average", 
-  "daily_excess_deaths_per_100k_econ_region_average", 
-  "daily_tests_per_100k_region_average",
-  "daily_tests_per_100k_sub_region_average", 
-  "daily_tests_per_100k_econ_region_average",
-  "daily_covid_cases_per_100k_region_average", 
-  "daily_covid_cases_per_100k_sub_region_average",
-  "daily_covid_cases_per_100k_econ_region_average", 
-  "daily_covid_deaths_per_100k_region_average",
-  "daily_covid_deaths_per_100k_sub_region_average",
-  "daily_covid_deaths_per_100k_econ_region_average",
-  "daily_positive_rate_region_average", "daily_positive_rate_sub_region_average",
-  "daily_positive_rate_econ_region_average",
-  "sero_nat_or_reg_delta_dist_average", "sero_nat_or_reg_delta_contiguous_country_average",
-  "sero_nat_delta_dist_average", "sero_nat_delta_contiguous_country_average",
-  "daily_excess_deaths_per_100k_dist_average", "daily_excess_deaths_per_100k_contiguous_country_average",
-  "daily_tests_per_100k_dist_average", "daily_tests_per_100k_contiguous_country_average",
-  "daily_covid_cases_per_100k_dist_average", "daily_covid_cases_per_100k_contiguous_country_average",
-  "daily_covid_deaths_per_100k_dist_average", "daily_covid_deaths_per_100k_contiguous_country_average",
-  "daily_positive_rate_dist_average", "daily_positive_rate_contiguous_country_average",
-  "daily_covid_deaths_per_100k", "daily_covid_deaths", "daily_covid_cases_per_100k",
-  "daily_covid_cases", "daily_tests_per_100k", "daily_positive_rate",
-  "daily_vaccinations", "daily_vaccinations_per_100k", "vaccinated_pct", 
-  "fully_vaccinated_pct", "cumulative_daily_tests_per_100k", 
-  "daily_tests",
-  "cumulative_daily_covid_cases_per_100k", 
-  "cumulative_daily_covid_deaths_per_100k", 
-  "cumulative_daily_vaccinations_per_100k",
-  "mobility_retail_rec_pct_of_baseline", 
-  "mobility_grocery_and_pharma_pct_of_baseline",
-  "mobility_parks_pct_of_baseline", "mobility_transit_rec_pct_of_baseline",
-  "mobility_workplaces_rec_pct_of_baseline",
-  "oxcgrt_schools_closed", "oxcgrt_workplaces_closed", 
-  "oxcgrt_cancel_public_events", "oxcgrt_gathering_restrictions", 
-  "oxcgrt_public_transport_closed", "oxcgrt_stay_at_home_required", 
-  "oxcgrt_internal_movement_restrictions", 
-  "oxcgrt_international_movement_restrictions", "oxcgrt_face_masks_required",
-  "sero_nat_or_reg_delta", "sero_nat_delta"
-)
-
+#sort out time variant and time invarient variables
+timeInvariant <- c()
+timeVariant <- c()
+#number of unique value if only changes with country
+noInvariant <- df %>% pull(iso3c) %>% unique() %>% length()
+for(variable in setdiff(predictors, noMissingDesign)){
+  temp <- df %>% 
+    select(iso3c, all_of(variable)) %>%
+    unique()
+  if(nrow(temp) == noInvariant){
+    timeInvariant <- c(timeInvariant, variable)
+  } else{
+    timeVariant <- c(timeVariant, variable)
+  }
+}
 
 #should match the predictors
 setdiff(c(noMissingDesign, timeInvariant, timeVariant), c(predictors, exclude))
@@ -258,6 +185,7 @@ df %>%
   table()
 #This just leaves south Korea whose only neighbour (north Korea) has missing info, though since border crossings
 #are rare we'll treat it as an island
+#also lichtenstien and monaco for some reason? These won't be used later and don't have excess deaths so won't have impact on training
 #we will leave missing continuous_averages as NA
 #updating the variables to impute to just those with missing data
 timeInvariant_missing <- missingCounts %>% 
