@@ -21,19 +21,31 @@ countries_to_remove <- df %>%
   summarise(
     across(
       !c(date, population, country),
-      ~ sum(is.na(.x)) > 0
-    )
+      ~ sum(is.na(.x))
+    ),
+    n = n()*ncol(df %>% select(!c(iso3c,date, population, country)))
   ) %>%
   mutate(
-    missing_cols = rowMeans(across(where(is.logical)))
+    missing_cols = (rowSums(across(where(is.numeric)))-n)/n
   ) %>% ungroup() %>%
   select(iso3c, missing_cols) %>%
-  filter(missing_cols >= 0.55) %>%
+  filter(missing_cols >= 0.50) %>%
   pull(iso3c)
+#also remove countries with no reported covid deaths
+countries_to_remove <- df %>% group_by(iso3c) %>%
+  summarise(
+    daily_covid_deaths = sum(daily_covid_deaths, na.rm = T),
+    daily_covid_deaths_per_100k = sum(daily_covid_deaths_per_100k, na.rm = T)
+  ) %>%
+  filter(daily_covid_deaths == 0, daily_covid_deaths_per_100k == 0) %>% 
+  pull(iso3c) %>% 
+  c(countries_to_remove) %>%
+  unique()
 countrycode::countrycode(countries_to_remove,
                          origin = "iso3c", destination = "country.name")
 #All micro states, disputed territories or overseas territories +  Puerto Rico which
 #is missing covid data other than vaccinations
+
 pred_frame <- df <- df %>%
   filter(!(iso3c %in% countries_to_remove))
 
