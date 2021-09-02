@@ -316,7 +316,7 @@ ggplot(country_export[country_export$iso3c %in% c("IND", "ZAF", "USA", "CHN",
 write_csv(country_export, "output-data/export_country.csv")
 
 #create png
-png("global_mortality.png")
+png("global_mortality.png", width = 800)
 ggplot(country_export %>% 
          mutate(daily_excess_deaths = if_else(
            is.na(daily_excess_deaths),
@@ -358,8 +358,8 @@ ggplot(country_export %>%
   geom_line(aes(y = daily_excess_deaths), colour = "red") + 
   geom_ribbon(aes(ymin = daily_excess_deaths_025 , ymax = daily_excess_deaths_975),
               fill = "red", alpha = 0.5) + 
-  geom_line(aes(y = daily_covid_deaths)) + 
-  labs(x = "Date", y = "Cumulative Deaths")
+  geom_line(aes(y = daily_covid_deaths), colour = "blue") + 
+  labs(x = "Date", y = "Cumulative Deaths", title = "Predicted Excess Mortality (red) vs Reported Covid Deaths (blue)")
 dev.off()
 
 # Export 2: Country-week level, per 100k
