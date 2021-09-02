@@ -315,6 +315,53 @@ ggplot(country_export[country_export$iso3c %in% c("IND", "ZAF", "USA", "CHN",
 # Write to file:
 write_csv(country_export, "output-data/export_country.csv")
 
+#create png
+png("global_mortality.png")
+ggplot(country_export %>% 
+         mutate(daily_excess_deaths = if_else(
+           is.na(daily_excess_deaths),
+           estimated_daily_excess_deaths,
+           daily_excess_deaths
+         ),
+         estimated_daily_excess_deaths_ci_95_bot = if_else(
+           estimated_daily_excess_deaths_ci_95_bot > daily_excess_deaths,
+           daily_excess_deaths,
+           estimated_daily_excess_deaths_ci_95_bot
+         ),
+         estimated_daily_excess_deaths_ci_95_top = if_else(
+           estimated_daily_excess_deaths_ci_95_top < daily_excess_deaths,
+           daily_excess_deaths,
+           estimated_daily_excess_deaths_ci_95_top
+         ),
+         date = as.Date(date, origin = "1970-01-01")) %>%
+         group_by(date) %>%
+         summarise(
+           daily_excess_deaths = sum(daily_excess_deaths, na.rm = T),
+           daily_excess_deaths_025 = sum(estimated_daily_excess_deaths_ci_95_bot, na.rm = T),
+           daily_excess_deaths_975 = sum(estimated_daily_excess_deaths_ci_95_top, na.rm = T),
+           daily_covid_deaths = sum(daily_covid_deaths, na.rm = T)
+         ) %>%
+         mutate(
+           daily_excess_deaths = daily_excess_deaths*7,
+           daily_excess_deaths_025 = daily_excess_deaths_025*7,
+           daily_excess_deaths_975 = daily_excess_deaths_975*7,
+           daily_covid_deaths = daily_covid_deaths*7
+         ) %>%
+         ungroup() %>%
+         mutate(
+           daily_excess_deaths = cumsum(daily_excess_deaths),
+           daily_excess_deaths_025 = cumsum(daily_excess_deaths_025),
+           daily_excess_deaths_975 = cumsum(daily_excess_deaths_975),
+           daily_covid_deaths = cumsum(daily_covid_deaths)
+         ),
+       aes(x = date)) + 
+  geom_line(aes(y = daily_excess_deaths), colour = "red") + 
+  geom_ribbon(aes(ymin = daily_excess_deaths_025 , ymax = daily_excess_deaths_975),
+              fill = "red", alpha = 0.5) + 
+  geom_line(aes(y = daily_covid_deaths)) + 
+  labs(x = "Date", y = "Cumulative Deaths")
+dev.off()
+
 # Export 2: Country-week level, per 100k
 country_export <- confidence_intervals(new_col_names = "estimated_daily_excess_deaths",
                                        group = "iso3c", 
